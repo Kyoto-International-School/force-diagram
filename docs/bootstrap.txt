@@ -1,0 +1,37 @@
+Bootstrap a new frontend project in this directory with a modern client-side stack for an interactive diagram/editor-style web app.
+
+Technical requirements:
+- Start from `npm create vite@latest . -- --template react-ts`
+- Use Vite + React + TypeScript
+- Add Tailwind CSS v4 with `@tailwindcss/vite`
+- Configure a `@` import alias pointing to `./src`
+- Set up ESLint
+- Add `knip` for unused files/exports
+- Add `@xyflow/react` so the project is ready for node/edge canvas or diagram work
+- Set up `shadcn/ui` as the UI primitives foundation
+- Keep the app fully client-side with no backend
+- Make the project suitable for static hosting, including GitHub Pages
+
+Implementation expectations:
+- Run the actual setup and install commands
+- Update project config files as needed
+- Create a minimal starter app that renders successfully
+- Confirm Tailwind is wired up and being used by the starter UI
+- Add a `check` script that runs lint, typecheck, and knip
+- Add a short README with local development, quality checks, production build, and static deployment notes
+
+Project constraints:
+- Do not add app-specific business logic yet
+- Do not add a server, database, or authentication
+- Keep the initial structure simple, clean, and ready for future localStorage-based persistence
+- Prefer sensible defaults over overengineering
+
+Validation:
+- `npm run build` must pass
+- The lint/typecheck/knip workflow must run successfully
+- The result should be a clean baseline for building a browser-only visual editor
+
+At the end:
+- Summarize what you changed
+- List the main files created or updated
+- Note any assumptions you made

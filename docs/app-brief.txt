@@ -1,0 +1,147 @@
+Build a single-page interactive web playground for Year 7 students to explore balanced and unbalanced forces.
+
+Goal:
+Create an approachable but not childish force-diagram sandbox where students can add force arrows to a central box, see the forces combine, and understand the resultant visually and numerically.
+
+Tech expectations:
+- Use a modern web stack suitable for a small interactive app
+- Keep the implementation simple and maintainable
+- Make the UI responsive enough for laptop classroom use
+- No backend needed
+- Prioritize clean interaction design over fancy effects
+
+Core interaction model:
+1. Show a central box on a grid-based canvas.
+2. Students can create a force by dragging outward from the box.
+3. The drag should snap to the nearest cardinal direction only:
+   - up
+   - down
+   - left
+   - right
+4. The dragged endpoint should snap to the nearest grid point.
+5. Force magnitudes must be whole numbers only.
+6. Treat 1 grid unit as 1 N.
+7. Students can apply up to 3 forces per side of the box.
+   - max 3 up
+   - max 3 down
+   - max 3 left
+   - max 3 right
+8. If a side already has 3 forces, prevent adding another on that side.
+9. Forces on the same side should be visually offset so they do not overlap.
+10. Existing forces should be editable:
+   - click/select a force
+   - drag its endpoint to change its magnitude
+11. Existing forces should be removable:
+   - selected force can be deleted with a visible remove control
+   - optionally support Backspace/Delete too
+
+Visual requirements:
+- Main area: force playground with box and force arrows
+- Side panel: resultant walkthrough and live calculations
+- Clean, classroom-friendly design
+- Approachable, but not babyish
+- Strong visual clarity
+- Labels should be easy to read
+- Grid should help with counting but not dominate the page
+
+Data model:
+Represent each force as an object with at least:
+- id
+- direction: "up" | "down" | "left" | "right"
+- magnitude: integer >= 1
+- creationOrder: integer
+- sideSlot: index used for visual offset on that side
+
+Behavior:
+- Forces are applied in creation order
+- Any add/edit/remove should immediately update all visuals and calculations
+- The app should recalculate:
+  - total up
+  - total down
+  - total left
+  - total right
+  - net horizontal
+  - net vertical
+  - final resultant vector from start to end
+
+Resultant walkthrough panel:
+This is the key teaching feature.
+
+Show:
+1. A starting node representing the box at origin
+2. A step-by-step vector walk where each force is applied one by one in creation order
+3. Intermediate nodes after each force
+4. A final end node
+5. A final resultant arrow drawn from the starting node directly to the end node
+
+Important:
+- The walkthrough is not just a summary
+- It must visibly “walk” through the sequence of forces
+- When forces change, the walkthrough updates live
+
+Math and labels:
+Display live values such as:
+- Up: X N
+- Down: Y N
+- Left: A N
+- Right: B N
+- Net horizontal: e.g. 4 N right / 0 N
+- Net vertical: e.g. 2 N up / 0 N
+- Resultant magnitude if easy to compute
+- Resultant direction in plain language
+
+For the final resultant:
+- Draw the arrow from start to final end position
+- This may be diagonal, horizontal, vertical, or zero
+- If zero, clearly show that forces are balanced and the resultant is 0 N
+
+UX details:
+- Show a subtle preview while dragging before committing a new force
+- Snap preview to direction and grid in real time
+- Make it obvious which side the new force belongs to
+- Selected force should have a clear visual treatment
+- Use concise explanatory text
+- Avoid clutter
+- Keep the learning loop immediate and visual
+
+Suggested layout:
+- Left: main interactive force canvas
+- Right: walkthrough + live totals + resultant summary
+- Optional small controls row:
+  - reset all
+  - remove selected force
+  - maybe toggle labels/grid if useful
+
+Edge cases:
+- Prevent zero-length forces
+- Prevent more than 3 forces on one side
+- Handle exact cancellation cleanly
+- Handle resultant = 0 clearly
+- Ensure same-side offsets stay stable after edits/removals
+- Keep creation order intact unless a force is deleted
+
+Implementation notes:
+- Separate rendering logic from force calculation logic
+- Put force math in small pure utility functions
+- Make snapping logic explicit and easy to test
+- Make side-slot assignment deterministic
+- Keep the code understandable for future iteration by another developer
+
+Please deliver:
+1. A working single-page implementation
+2. Clean component structure
+3. Utility functions for:
+   - snapping drag direction
+   - snapping to grid magnitude
+   - calculating totals
+   - generating walkthrough positions
+   - calculating resultant
+4. Clear inline comments where interaction logic is non-obvious
+
+Also include:
+- a short explanation of the component/file structure
+- a short note on where I would tweak:
+  - grid size
+  - max forces per side
+  - styling
+  - labels
