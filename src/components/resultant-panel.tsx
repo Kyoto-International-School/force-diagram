@@ -15,8 +15,10 @@ import {
   PLAYGROUND_GRID_RADIUS,
 } from "@/lib/force-config"
 import {
+  calculateResultant,
   type ForceItem,
   generateWalkthroughPositions,
+  summarizeVectorMagnitude,
 } from "@/lib/forces"
 import type { AppSettings } from "@/lib/settings"
 
@@ -61,6 +63,7 @@ export function ResultantPanel({
   playbackKey,
   onPlaybackComplete,
 }: ResultantPanelProps) {
+  const resultant = calculateResultant(forces)
   const walkthrough = generateWalkthroughPositions(forces)
   const walkthroughStepCount = walkthrough.steps.length
   const [playbackState, setPlaybackState] = useState<PlaybackState>(() =>
@@ -69,13 +72,14 @@ export function ResultantPanel({
   const currentResultPoint =
     playbackState.mode === "walkthrough"
       ? walkthrough.positions[playbackState.completedSteps]
-      : playbackState.mode === "resultant"
-        ? walkthrough.end
-        : walkthrough.end
+      : { x: resultant.x, y: resultant.y }
+  const magnitudeSummary = summarizeVectorMagnitude(
+    currentResultPoint.x,
+    currentResultPoint.y,
+  )
+  const finalMagnitudeSummary = summarizeVectorMagnitude(resultant.x, resultant.y)
   const verticalComponent = Math.abs(currentResultPoint.y)
   const horizontalComponent = Math.abs(currentResultPoint.x)
-  const squaredSum = verticalComponent ** 2 + horizontalComponent ** 2
-  const magnitudeValue = formatMagnitudeValue(Math.hypot(currentResultPoint.x, currentResultPoint.y))
 
   const completedWalkthroughArrows: DiagramArrow[] = walkthrough.steps
     .slice(0, playbackState.completedSteps)
@@ -118,12 +122,16 @@ export function ResultantPanel({
             from: { x: 0, y: 0 },
             to:
               playbackState.mode === "resultant"
-                ? interpolatePoint({ x: 0, y: 0 }, walkthrough.end, playbackState.resultantProgress)
-                : walkthrough.end,
+                ? interpolatePoint(
+                    { x: 0, y: 0 },
+                    { x: resultant.x, y: resultant.y },
+                    playbackState.resultantProgress,
+                  )
+                : { x: resultant.x, y: resultant.y },
             stroke: "#eab308",
             label:
               settings.advancedMode && playbackState.mode === "idle"
-                ? `${formatMagnitudeValue(Math.hypot(walkthrough.end.x, walkthrough.end.y))} N`
+                ? `${finalMagnitudeSummary.isApproximate ? "≈ " : ""}${finalMagnitudeSummary.magnitudeText} N`
                 : undefined,
             labelRotateWithLine: true,
             strokeDasharray: "12 8",
@@ -307,13 +315,13 @@ export function ResultantPanel({
                 ={" "}
                 <math className="inline-block align-middle">
                   <msqrt>
-                    <mn>{squaredSum}</mn>
+                    <mn>{magnitudeSummary.squaredSum}</mn>
                   </msqrt>
                 </math>{" "}
-                ={" "}
+                {magnitudeSummary.relationSymbol}{" "}
                 <math className="inline-block align-middle">
                   <mrow>
-                    <mn>{magnitudeValue}</mn>
+                    <mn>{magnitudeSummary.magnitudeText}</mn>
                     <mtext>&nbsp;N</mtext>
                   </mrow>
                 </math>
@@ -324,14 +332,6 @@ export function ResultantPanel({
       </div>
     </section>
   )
-}
-
-function formatMagnitudeValue(value: number) {
-  if (Number.isInteger(value)) {
-    return value.toString()
-  }
-
-  return value.toFixed(1)
 }
 
 function formatComponentValue(value: number) {

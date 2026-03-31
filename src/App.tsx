@@ -8,6 +8,7 @@ import {
   assignSideSlots,
   canAddForceToSide,
   canMoveForceToSide,
+  normalizeCommittedMagnitude,
 } from "@/lib/forces"
 import {
   clearPersistedAppState,
@@ -25,24 +26,16 @@ function createForceId(creationOrder: number) {
 }
 
 function App() {
-  const restoredAppStateRef = useRef<ReturnType<typeof restoreAppState> | null>(null)
-
-  if (restoredAppStateRef.current === null) {
-    restoredAppStateRef.current = restoreAppState()
-  }
-
-  const [forces, setForces] = useState<ForceItem[]>(restoredAppStateRef.current.forces)
+  const [restoredAppState] = useState(() => restoreAppState())
+  const [forces, setForces] = useState<ForceItem[]>(restoredAppState.forces)
   const [previewForce, setPreviewForce] = useState<ForceItem | null>(null)
   const [selectedForceId, setSelectedForceId] = useState<string | null>(null)
   const [resultsPlaybackKey, setResultsPlaybackKey] = useState(0)
   const [isResultsPlaying, setIsResultsPlaying] = useState(false)
   const [lastPlayedForcesSignature, setLastPlayedForcesSignature] = useState<string | null>(null)
-  const [playAttentionVersion, setPlayAttentionVersion] = useState(0)
-  const [settings, setSettings] = useState(
-    restoredAppStateRef.current.settings ?? DEFAULT_APP_SETTINGS,
-  )
-  const nextCreationOrderRef = useRef(restoredAppStateRef.current.nextCreationOrder)
-  const lastForcesSignatureRef = useRef(getForcesSignature(restoredAppStateRef.current.forces))
+  const [settings, setSettings] = useState(restoredAppState.settings ?? DEFAULT_APP_SETTINGS)
+  const nextCreationOrderRef = useRef(restoredAppState.nextCreationOrder)
+  const forcesSignature = getForcesSignature(forces)
 
   const stopResultsPlayback = useCallback(() => {
     setResultsPlaybackKey(0)
@@ -77,20 +70,6 @@ function App() {
   }, [forces, settings])
 
   useEffect(() => {
-    const nextSignature = getForcesSignature(forces)
-
-    if (nextSignature === lastForcesSignatureRef.current) {
-      return
-    }
-
-    lastForcesSignatureRef.current = nextSignature
-
-    if (forces.length > 0 && nextSignature !== lastPlayedForcesSignature) {
-      setPlayAttentionVersion((currentVersion) => currentVersion + 1)
-    }
-  }, [forces, lastPlayedForcesSignature])
-
-  useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (!selectedForceId || (event.key !== "Backspace" && event.key !== "Delete")) {
         return
@@ -117,6 +96,12 @@ function App() {
     stopResultsPlayback()
     setPreviewForce(null)
     setForces((currentForces) => {
+      const normalizedMagnitude = normalizeCommittedMagnitude(magnitude)
+
+      if (normalizedMagnitude === null) {
+        return currentForces
+      }
+
       if (!canAddForceToSide(currentForces, direction)) {
         return currentForces
       }
@@ -124,7 +109,7 @@ function App() {
       const nextForce: ForceItem = {
         id: createForceId(nextCreationOrderRef.current),
         direction,
-        magnitude,
+        magnitude: normalizedMagnitude,
         creationOrder: nextCreationOrderRef.current,
         sideSlot: 0,
       }
@@ -138,6 +123,12 @@ function App() {
   const updateForce = (forceId: string, direction: ForceDirection, magnitude: number) => {
     stopResultsPlayback()
     setForces((currentForces) => {
+      const normalizedMagnitude = normalizeCommittedMagnitude(magnitude)
+
+      if (normalizedMagnitude === null) {
+        return currentForces
+      }
+
       const existingForce = currentForces.find((force) => force.id === forceId)
 
       if (!existingForce) {
@@ -153,7 +144,9 @@ function App() {
 
       return assignSideSlots(
         currentForces.map((force) =>
-          force.id === forceId ? { ...force, direction, magnitude } : force,
+          force.id === forceId
+            ? { ...force, direction, magnitude: normalizedMagnitude }
+            : force,
         ),
       )
     })
@@ -202,7 +195,7 @@ function App() {
       return
     }
 
-    setLastPlayedForcesSignature(getForcesSignature(forces))
+    setLastPlayedForcesSignature(forcesSignature)
     setSelectedForceId(null)
     setIsResultsPlaying(true)
     setResultsPlaybackKey((currentKey) => currentKey + 1)
@@ -239,9 +232,9 @@ function App() {
               shouldPulsePlayButton={
                 forces.length > 0 &&
                 !isResultsPlaying &&
-                getForcesSignature(forces) !== lastPlayedForcesSignature
+                forcesSignature !== lastPlayedForcesSignature
               }
-              playAttentionVersion={playAttentionVersion}
+              playAttentionVersion={forcesSignature}
             />
           </div>
           <div className="min-w-0">

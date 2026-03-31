@@ -44,6 +44,14 @@ type Resultant = {
   directionLabel: string
 }
 
+export type VectorMagnitudeSummary = {
+  squaredSum: number
+  magnitude: number
+  magnitudeText: string
+  relationSymbol: "=" | "≈"
+  isApproximate: boolean
+}
+
 export type ForcePreview = {
   direction: ForceDirection
   magnitude: number
@@ -70,6 +78,23 @@ export function snapDragDirection(dx: number, dy: number): ForceDirection | null
 export function snapToGridMagnitude(distance: number, maxMagnitude = PLAYGROUND_GRID_RADIUS) {
   const snapped = Math.round(distance)
   return Math.max(0, Math.min(maxMagnitude, snapped))
+}
+
+export function normalizeCommittedMagnitude(
+  magnitude: number,
+  maxMagnitude = PLAYGROUND_GRID_RADIUS,
+) {
+  if (!Number.isFinite(magnitude)) {
+    return null
+  }
+
+  const normalized = Math.round(magnitude)
+
+  if (normalized < 1) {
+    return null
+  }
+
+  return Math.min(maxMagnitude, normalized)
 }
 
 function countForcesOnSide(
@@ -221,11 +246,36 @@ export function formatAxisNet(value: number, positiveDirection: ForceDirection, 
 }
 
 export function formatMagnitude(value: number) {
+  return `${formatMagnitudeValue(value)} N`
+}
+
+export function formatMagnitudeValue(value: number, precision = 2) {
   if (Number.isInteger(value)) {
-    return `${value} N`
+    return value.toString()
   }
 
-  return `${value.toFixed(1)} N`
+  return value.toFixed(precision)
+}
+
+export function summarizeVectorMagnitude(
+  x: number,
+  y: number,
+  precision = 2,
+): VectorMagnitudeSummary {
+  const magnitude = Math.hypot(x, y)
+  const squaredSum = x ** 2 + y ** 2
+  const roundedMagnitude = Number(formatMagnitudeValue(magnitude, precision))
+  const isApproximate =
+    !Number.isInteger(magnitude) &&
+    Math.abs(magnitude - roundedMagnitude) > 10 ** (-(precision + 1))
+
+  return {
+    squaredSum,
+    magnitude,
+    magnitudeText: formatMagnitudeValue(magnitude, precision),
+    relationSymbol: isApproximate ? "≈" : "=",
+    isApproximate,
+  }
 }
 
 function formatResultantDirection(horizontal: number, vertical: number) {

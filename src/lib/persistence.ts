@@ -1,4 +1,9 @@
-import { assignSideSlots, type ForceDirection, type ForceItem } from "@/lib/forces"
+import {
+  assignSideSlots,
+  normalizeCommittedMagnitude,
+  type ForceDirection,
+  type ForceItem,
+} from "@/lib/forces"
 import { DEFAULT_APP_SETTINGS, type AppSettings } from "@/lib/settings"
 
 const STORAGE_KEY = "force-diagram.state.v1"
@@ -33,10 +38,21 @@ export function restoreAppState(): RestoredAppState {
       ? assignSideSlots(
           parsedState.forces
             .filter(isPersistedForce)
-            .map((force) => ({
-              ...force,
-              sideSlot: 0,
-            })),
+            .flatMap((force) => {
+              const magnitude = normalizeCommittedMagnitude(force.magnitude)
+
+              if (magnitude === null) {
+                return []
+              }
+
+              return [
+                {
+                  ...force,
+                  magnitude,
+                  sideSlot: 0,
+                },
+              ]
+            }),
         )
       : []
     const nextCreationOrder =

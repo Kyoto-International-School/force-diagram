@@ -86,7 +86,7 @@ type ForcePlaygroundProps = {
   canPlayResults: boolean
   isResultsPlaying: boolean
   shouldPulsePlayButton: boolean
-  playAttentionVersion: number
+  playAttentionVersion: string
 }
 
 const TOUCH_DRAG_THRESHOLD_PX = 10
