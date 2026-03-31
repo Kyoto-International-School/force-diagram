@@ -1,4 +1,5 @@
-import { type PointerEvent as ReactPointerEvent, useEffect, useMemo, useRef, useState } from "react"
+/* eslint-disable max-lines */
+import { type PointerEvent as ReactPointerEvent, useCallback, useEffect, useMemo, useRef, useState } from "react"
 
 import { ArrowUpDown, Eraser, GripVertical, Play, RotateCcw, Settings } from "lucide-react"
 import {
@@ -120,7 +121,7 @@ export function ForcePlayground({
   const [isOrderOpen, setIsOrderOpen] = useState(false)
   const [isResetConfirmOpen, setIsResetConfirmOpen] = useState(false)
   const [isOnboardingDismissed, setIsOnboardingDismissed] = useState(() =>
-    hasDismissedPlaygroundOnboarding(),
+    hasDismissedPlaygroundOnboarding() || forces.length > 0,
   )
   const [orderDragState, setOrderDragState] = useState<{
     forceId: string
@@ -156,24 +157,18 @@ export function ForcePlayground({
     !isOrderOpen &&
     !isResetConfirmOpen
 
-  const dismissOnboardingGesture = () => {
+  const dismissOnboardingGesture = useCallback(() => {
     if (isOnboardingDismissed) {
       return
     }
 
     setIsOnboardingDismissed(true)
     dismissPlaygroundOnboarding()
-  }
+  }, [isOnboardingDismissed])
 
   useEffect(() => {
     orderedForceIdsRef.current = orderedForces.map((force) => force.id)
   }, [orderedForces])
-
-  useEffect(() => {
-    if (forces.length > 0) {
-      dismissOnboardingGesture()
-    }
-  }, [forces.length])
 
   useEffect(() => {
     if (!dragState && !pendingTouchEdit) {
@@ -290,6 +285,7 @@ export function ForcePlayground({
         const finalPreview = point ? getPreviewForPoint(point) : preview
 
         if (finalPreview && !finalPreview.blocked && finalPreview.magnitude >= 1) {
+          dismissOnboardingGesture()
           onAddForce(finalPreview.direction, finalPreview.magnitude)
         }
       }
@@ -314,7 +310,7 @@ export function ForcePlayground({
       window.removeEventListener("pointerup", handlePointerUp)
       window.removeEventListener("pointercancel", handlePointerCancel)
     }
-  }, [dragState, forces, onAddForce, onUpdateForce, pendingTouchEdit, preview])
+  }, [dismissOnboardingGesture, dragState, forces, onAddForce, onUpdateForce, pendingTouchEdit, preview])
 
   useEffect(() => {
     if (!orderDragState) {

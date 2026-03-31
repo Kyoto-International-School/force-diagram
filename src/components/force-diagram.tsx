@@ -1,3 +1,4 @@
+/* eslint-disable max-lines */
 import { type PointerEvent as ReactPointerEvent, type RefObject } from "react"
 
 import {

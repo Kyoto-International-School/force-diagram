@@ -17,11 +17,10 @@ export function InfoTooltip({ children, label }: InfoTooltipProps) {
   const tooltipRef = useRef<HTMLDivElement | null>(null)
   const tooltipId = useId()
 
-  useEffect(() => {
-    if (!open) {
-      setIsPositioned(false)
-    }
-  }, [open])
+  const closeTooltip = () => {
+    setOpen(false)
+    setIsPositioned(false)
+  }
 
   useLayoutEffect(() => {
     if (!open) {
@@ -73,13 +72,13 @@ export function InfoTooltip({ children, label }: InfoTooltipProps) {
         !containerRef.current?.contains(target) &&
         !tooltipRef.current?.contains(target)
       ) {
-        setOpen(false)
+        closeTooltip()
       }
     }
 
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
-        setOpen(false)
+        closeTooltip()
       }
     }
 
@@ -101,7 +100,14 @@ export function InfoTooltip({ children, label }: InfoTooltipProps) {
         aria-expanded={open}
         aria-describedby={open ? tooltipId : undefined}
         className="inline-flex size-7 items-center justify-center rounded-full bg-white text-slate-500 transition hover:text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-300"
-        onClick={() => setOpen((current) => !current)}
+        onClick={() => {
+          if (open) {
+            closeTooltip()
+            return
+          }
+
+          setOpen(true)
+        }}
       >
         <Info className="size-4" />
       </button>

@@ -3,14 +3,12 @@ import { DIRECTION_FILL_COLORS, type DiagramPoint } from "@/lib/diagram"
 import {
   BOX_HALF_UNITS,
   DIAGRAM_HANDLE_RADIUS,
-  DIAGRAM_OBJECT_FONT_SIZE,
   DIAGRAM_SELECTED_HANDLE_RADIUS,
   GRID_UNIT_PX,
 } from "@/lib/force-config"
 import type { ForceDirection } from "@/lib/forces"
 
 const OBJECT_NODE_SIZE_PX = BOX_HALF_UNITS * GRID_UNIT_PX * 2
-export const RESULT_END_RADIUS = 22
 const HANDLE_HIT_RADIUS = 24
 
 export function createObjectNode({
@@ -41,30 +39,6 @@ export function createObjectNode({
     strokeWidth,
     className,
     onPointerDown,
-  }
-}
-
-export function createResultEndNode({
-  id,
-  point,
-}: {
-  id: string
-  point: DiagramPoint
-}): DiagramNode {
-  return {
-    id,
-    point,
-    shape: "circle",
-    layer: "below-arrows",
-    radius: RESULT_END_RADIUS,
-    fill: "#16a34a",
-    stroke: "#16a34a",
-    strokeWidth: 3,
-    label: "End",
-    labelColor: "#ffffff",
-    labelFontSize: DIAGRAM_OBJECT_FONT_SIZE,
-    labelDy: 6,
-    labelClassName: "font-semibold",
   }
 }
 

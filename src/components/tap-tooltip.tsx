@@ -17,11 +17,10 @@ export function TapTooltip({ children, content, label }: TapTooltipProps) {
   const tooltipRef = useRef<HTMLDivElement | null>(null)
   const tooltipId = useId()
 
-  useEffect(() => {
-    if (!open) {
-      setIsPositioned(false)
-    }
-  }, [open])
+  const closeTooltip = () => {
+    setOpen(false)
+    setIsPositioned(false)
+  }
 
   useLayoutEffect(() => {
     if (!open) {
@@ -73,13 +72,13 @@ export function TapTooltip({ children, content, label }: TapTooltipProps) {
         !containerRef.current?.contains(target) &&
         !tooltipRef.current?.contains(target)
       ) {
-        setOpen(false)
+        closeTooltip()
       }
     }
 
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
-        setOpen(false)
+        closeTooltip()
       }
     }
 
@@ -98,7 +97,12 @@ export function TapTooltip({ children, content, label }: TapTooltipProps) {
     }
 
     event.preventDefault()
-    setOpen((current) => !current)
+    if (open) {
+      closeTooltip()
+      return
+    }
+
+    setOpen(true)
   }
 
   return (
@@ -111,7 +115,14 @@ export function TapTooltip({ children, content, label }: TapTooltipProps) {
         aria-expanded={open}
         aria-describedby={open ? tooltipId : undefined}
         className="inline-flex cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-300"
-        onClick={() => setOpen((current) => !current)}
+        onClick={() => {
+          if (open) {
+            closeTooltip()
+            return
+          }
+
+          setOpen(true)
+        }}
         onKeyDown={handleTriggerKeyDown}
       >
         {children}

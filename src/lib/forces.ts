@@ -44,7 +44,7 @@ type Resultant = {
   directionLabel: string
 }
 
-export type VectorMagnitudeSummary = {
+type VectorMagnitudeSummary = {
   squaredSum: number
   magnitude: number
   magnitudeText: string
@@ -172,7 +172,7 @@ export function getForceEndpoint(force: Pick<ForceItem, "direction" | "sideSlot"
   }
 }
 
-export function calculateTotals(forces: ForceItem[]): ForceTotals {
+function calculateTotals(forces: ForceItem[]): ForceTotals {
   const totals = forces.reduce<Pick<ForceTotals, "up" | "down" | "left" | "right">>(
     (runningTotals, force) => {
       runningTotals[force.direction] += force.magnitude
@@ -236,20 +236,7 @@ export function calculateResultant(forces: ForceItem[]) {
   } satisfies Resultant
 }
 
-export function formatAxisNet(value: number, positiveDirection: ForceDirection, negativeDirection: ForceDirection) {
-  if (value === 0) {
-    return "0 N"
-  }
-
-  const direction = value > 0 ? positiveDirection : negativeDirection
-  return `${Math.abs(value)} N ${direction}`
-}
-
-export function formatMagnitude(value: number) {
-  return `${formatMagnitudeValue(value)} N`
-}
-
-export function formatMagnitudeValue(value: number, precision = 2) {
+function formatMagnitudeValue(value: number, precision = 2) {
   if (Number.isInteger(value)) {
     return value.toString()
   }
