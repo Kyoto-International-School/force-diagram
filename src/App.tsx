@@ -115,6 +115,7 @@ function App() {
 
   const addForce = (direction: ForceDirection, magnitude: number) => {
     stopResultsPlayback()
+    setPreviewForce(null)
     setForces((currentForces) => {
       if (!canAddForceToSide(currentForces, direction)) {
         return currentForces
@@ -245,7 +246,7 @@ function App() {
           </div>
           <div className="min-w-0">
             <ResultantPanel
-              forces={previewForce ? [...forces, previewForce] : forces}
+              forces={getResultantForces(forces, previewForce)}
               settings={settings}
               playbackKey={resultsPlaybackKey}
               onPlaybackComplete={handleResultsPlaybackComplete}
@@ -261,6 +262,25 @@ function getForcesSignature(forces: ForceItem[]) {
   return forces
     .map((force) => `${force.id}:${force.direction}:${force.magnitude}:${force.creationOrder}:${force.sideSlot}`)
     .join("|")
+}
+
+function getResultantForces(forces: ForceItem[], previewForce: ForceItem | null) {
+  if (!previewForce) {
+    return forces
+  }
+
+  const previewAlreadyCommitted = forces.some(
+    (force) =>
+      force.direction === previewForce.direction &&
+      force.magnitude === previewForce.magnitude &&
+      force.sideSlot === previewForce.sideSlot,
+  )
+
+  if (previewAlreadyCommitted) {
+    return forces
+  }
+
+  return [...forces, previewForce]
 }
 
 export default App

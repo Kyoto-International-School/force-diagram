@@ -55,7 +55,7 @@ function sortForcesByCreation(forces: ForceItem[]) {
   return [...forces].sort((left, right) => left.creationOrder - right.creationOrder)
 }
 
-export function snapDragDirection(dx: number, dy: number) {
+export function snapDragDirection(dx: number, dy: number): ForceDirection | null {
   if (Math.abs(dx) < 0.2 && Math.abs(dy) < 0.2) {
     return null
   }

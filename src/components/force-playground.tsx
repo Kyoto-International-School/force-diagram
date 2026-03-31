@@ -180,6 +180,47 @@ export function ForcePlayground({
       return undefined
     }
 
+    const getPointForEvent = (event: PointerEvent) =>
+      getPointFromDiagramClient(
+        svgRef.current,
+        event.clientX,
+        event.clientY,
+        PLAYGROUND_GRID_RADIUS,
+      )
+
+    const getPreviewForPoint = (point: { x: number; y: number }) => {
+      const direction = snapDragDirection(point.x, point.y)
+
+      if (!direction) {
+        return null
+      }
+
+      const magnitude = snapToGridMagnitude(
+        getDirectionalMagnitudeFromPoint(point, direction),
+      )
+
+      return {
+        direction,
+        magnitude,
+        sideSlot: getNextSideSlot(forces, direction),
+        blocked: !canAddForceToSide(forces, direction),
+      }
+    }
+
+    const applyEditForPoint = (point: { x: number; y: number }, forceId: string) => {
+      const direction = snapDragDirection(point.x, point.y)
+
+      if (!direction) {
+        return
+      }
+
+      const magnitude = snapToGridMagnitude(getDirectionalMagnitudeFromPoint(point, direction))
+
+      if (magnitude >= 1 && canMoveForceToSide(forces, forceId, direction)) {
+        onUpdateForce(forceId, direction, magnitude)
+      }
+    }
+
     const handlePointerMove = (event: PointerEvent) => {
       if (event.cancelable) {
         event.preventDefault()
@@ -210,36 +251,14 @@ export function ForcePlayground({
         return
       }
 
-      const point = getPointFromDiagramClient(
-        svgRef.current,
-        event.clientX,
-        event.clientY,
-        PLAYGROUND_GRID_RADIUS,
-      )
+      const point = getPointForEvent(event)
 
       if (!point) {
         return
       }
 
       if (dragState?.mode === "create") {
-        const direction = snapDragDirection(point.x, point.y)
-
-        if (!direction) {
-          setPreview(null)
-          return
-        }
-
-        const magnitude = snapToGridMagnitude(
-          getDirectionalMagnitudeFromPoint(point, direction),
-        )
-        const blocked = !canAddForceToSide(forces, direction)
-
-        setPreview({
-          direction,
-          magnitude,
-          sideSlot: getNextSideSlot(forces, direction),
-          blocked,
-        })
+        setPreview(getPreviewForPoint(point))
         return
       }
 
@@ -250,17 +269,7 @@ export function ForcePlayground({
         return
       }
 
-      const direction = snapDragDirection(point.x, point.y)
-
-      if (!direction) {
-        return
-      }
-
-      const magnitude = snapToGridMagnitude(getDirectionalMagnitudeFromPoint(point, direction))
-
-      if (magnitude >= 1 && canMoveForceToSide(forces, editForceId, direction)) {
-        onUpdateForce(editForceId, direction, magnitude)
-      }
+      applyEditForPoint(point, editForceId)
     }
 
     const resetInteraction = () => {
@@ -275,8 +284,18 @@ export function ForcePlayground({
         return
       }
 
-      if (dragState?.mode === "create" && preview && !preview.blocked && preview.magnitude >= 1) {
-        onAddForce(preview.direction, preview.magnitude)
+      const point = getPointForEvent(event)
+
+      if (dragState?.mode === "create") {
+        const finalPreview = point ? getPreviewForPoint(point) : preview
+
+        if (finalPreview && !finalPreview.blocked && finalPreview.magnitude >= 1) {
+          onAddForce(finalPreview.direction, finalPreview.magnitude)
+        }
+      }
+
+      if (dragState?.mode === "edit" && point) {
+        applyEditForPoint(point, dragState.forceId)
       }
 
       resetInteraction()
@@ -390,6 +409,28 @@ export function ForcePlayground({
 
   const diagramArrows: DiagramArrow[] = forces.map((force) => {
     const isSelected = force.id === selectedForceId
+    const beginForceEdit = (
+      event: ReactPointerEvent<SVGLineElement | SVGCircleElement>,
+    ) => {
+      event.stopPropagation()
+      onSelectForce(force.id)
+
+      if (event.pointerType === "touch") {
+        setPendingTouchEdit({
+          pointerId: event.pointerId,
+          startX: event.clientX,
+          startY: event.clientY,
+          forceId: force.id,
+        })
+        return
+      }
+
+      setPendingTouchEdit(null)
+      setDragState({
+        mode: "edit",
+        forceId: force.id,
+      })
+    }
 
     return {
       id: force.id,
@@ -401,44 +442,11 @@ export function ForcePlayground({
       opacity: isSelected ? 1 : 0.9,
       strokeWidth: isSelected ? DIAGRAM_SELECTED_LINE_STROKE : DIAGRAM_LINE_STROKE,
       lineHitAreaWidth: 30,
-      onPointerDown: (event: ReactPointerEvent<SVGLineElement>) => {
-        event.stopPropagation()
-        onSelectForce(force.id)
-
-        if (event.pointerType === "touch") {
-          setPendingTouchEdit({
-            pointerId: event.pointerId,
-            startX: event.clientX,
-            startY: event.clientY,
-            forceId: force.id,
-          })
-          return
-        }
-
-        setPendingTouchEdit(null)
-      },
+      onPointerDown: beginForceEdit,
       endpointHandle: createForceEndpointHandle({
         direction: force.direction,
         isSelected,
-        onPointerDown: (event: ReactPointerEvent<SVGCircleElement>) => {
-          event.stopPropagation()
-          onSelectForce(force.id)
-          if (event.pointerType === "touch") {
-            setPendingTouchEdit({
-              pointerId: event.pointerId,
-              startX: event.clientX,
-              startY: event.clientY,
-              forceId: force.id,
-            })
-            return
-          }
-
-          setPendingTouchEdit(null)
-          setDragState({
-            mode: "edit",
-            forceId: force.id,
-          })
-        },
+        onPointerDown: beginForceEdit,
       }),
     }
   })

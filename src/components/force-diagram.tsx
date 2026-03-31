@@ -367,6 +367,7 @@ export function ForceDiagram({
         const from = toSvgPoint(arrow.from)
         const to = toSvgPoint(arrow.to)
         const shaftEnd = arrow.markerEnd === false ? to : getArrowShaftEnd(from, to, arrow.strokeWidth)
+        const hitAreaEnd = arrow.markerEnd === false ? to : arrow.endpointHandle ? to : shaftEnd
         const labelLayout = labelLayouts.get(arrow.id)
 
         return (
@@ -375,8 +376,8 @@ export function ForceDiagram({
               <line
                 x1={from.x}
                 y1={from.y}
-                x2={shaftEnd.x}
-                y2={shaftEnd.y}
+                x2={hitAreaEnd.x}
+                y2={hitAreaEnd.y}
                 className={arrow.hitAreaClassName ?? "cursor-pointer stroke-transparent"}
                 strokeWidth={arrow.lineHitAreaWidth ?? 18}
                 strokeLinecap="round"
