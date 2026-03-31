@@ -58,6 +58,14 @@ For GitHub Pages, build with the repository name as the base path:
 npm run build:pages
 ```
 
+This repository also includes a GitHub Actions workflow at [`.github/workflows/deploy-pages.yml`](/Users/ash/dev/kis/gh-org/force-diagram/.github/workflows/deploy-pages.yml) that deploys `main` to GitHub Pages automatically.
+
+One-time repository setup in GitHub:
+
+1. Open `Settings` -> `Pages`
+2. Set `Source` to `GitHub Actions`
+3. Push to `main` or rerun the `Deploy GitHub Pages` workflow from the `Actions` tab
+
 If the site is deployed under a different subpath, override the base path at build time:
 
 ```bash
